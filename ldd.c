@@ -8,39 +8,38 @@ MODULE_DESCRIPTION("A KERNEL DRIVER"); //!
 
 static struct proc_dir_entry *custom_proc_node;
 
+static char shared_kernel_buffer[128] = "Ack!\n";
+static size_t shared_buffer_len = 5;
+
 static ssize_t custom_read(struct file * file_name, char *user_space_buffer, size_t count, loff_t* offset){
-    char msg[] = "Ack!\n";
-    size_t len=strlen(msg);
     int res;
 
-
-    if(*offset>=len) 
+    if(*offset >= shared_buffer_len) 
         return 0;
 
-    res = copy_to_user(user_space_buffer, msg, len);
-    *offset+=len;
+    res = copy_to_user(user_space_buffer, shared_kernel_buffer, shared_buffer_len);
+    *offset += shared_buffer_len;
 
-    printk(KERN_INFO "KERNEL PROC FS READ: ENTRY\n");
+    printk(KERN_INFO "KERNEL PROC FS READ: %s\n", shared_kernel_buffer);
     
-    return len;
+    return shared_buffer_len;
 }
 
 static ssize_t custom_write(struct file * file_name, const char __user *user_space_buffer, size_t count, loff_t* offset){
-    char kernel_buffer[128];
-    size_t len;
     int res;
 
-    len = count < sizeof(kernel_buffer) - 1 ? count : sizeof(kernel_buffer) - 1;
+    shared_buffer_len = count < sizeof(shared_kernel_buffer) - 1 ? count : sizeof(shared_kernel_buffer) - 1;
 
-    if(*offset>=len) 
+    if(*offset >= shared_buffer_len) 
         return 0;
 
-    res = copy_from_user(kernel_buffer, user_space_buffer, len);
-    *offset+=len;
+    res = copy_from_user(shared_kernel_buffer, user_space_buffer, shared_buffer_len);
+    shared_kernel_buffer[shared_buffer_len] = '\0';
+    *offset += shared_buffer_len;
 
-    printk(KERN_INFO "KERNEL PROC FS WRITE: %s\n", kernel_buffer);
+    printk(KERN_INFO "KERNEL PROC FS WRITE: %s\n", shared_kernel_buffer);
     
-    return len;
+    return shared_buffer_len;
 }
 
 struct proc_ops driver_proc_ops = {
