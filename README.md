@@ -1,4 +1,4 @@
-# Simple Kernel-User Space Communication
+# Kernel Echo
 
 This project demonstrates a basic way to send data back and forth between user space (a Python app) and the Linux kernel space using the `/proc` filesystem.
 
